@@ -7,7 +7,7 @@ import (
 	"github.com/pandodao/tokenizer-go"
 )
 
-var tokenLimit = 4000
+var TokenLimit = 4000
 
 type PostType int
 
@@ -48,7 +48,7 @@ type Post struct {
 	Image      string   `json:"image"`
 	Contents   string   `json:"contents"`
 	Summary    string   `json:"summary"`
-	Summarized bool     `json:"summarized"`
+	Summarized bool     `json:"summarized,omitempty"`
 }
 
 func (p Post) String() string {
@@ -63,7 +63,7 @@ func (p Post) FormatSummarizable() (string, bool) {
 		return "", false
 	}
 
-	if tokens > tokenLimit {
+	if tokens > TokenLimit {
 		return "", false
 	}
 

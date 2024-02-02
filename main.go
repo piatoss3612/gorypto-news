@@ -8,7 +8,7 @@ func main() {
 
 	s := NewTokenPostScraper(true)
 
-	posts, done, errs := s.Scrape(5)
+	posts, done, errs := s.Scrape(1)
 
 	for {
 		select {
