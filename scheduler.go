@@ -30,7 +30,7 @@ func NewScheduler(sum *Summarizer) (*Scheduler, error) {
 }
 
 func (s *Scheduler) AddScraper(scraper Scraper, res chan<- *Post, duration time.Duration, limit uint, logging bool) error {
-	j, err := s.NewJob(gocron.DurationJob(duration), gocron.NewTask(func() {
+	_, err := s.NewJob(gocron.DurationJob(duration), gocron.NewTask(func() {
 		post, done, errs := scraper.Scrape(limit)
 
 		for {
@@ -74,10 +74,6 @@ func (s *Scheduler) AddScraper(scraper Scraper, res chan<- *Post, duration time.
 	if err != nil {
 		return err
 	}
-
-	go func() {
-		j.RunNow()
-	}()
 
 	return nil
 }
