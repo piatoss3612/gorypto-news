@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync/atomic"
 
 	"github.com/gocolly/colly/v2"
 )
@@ -42,8 +43,15 @@ func NewTokenPostScraper(logging bool) *TokenPostScraper {
 	return s
 }
 
-func (s *TokenPostScraper) Scrape() (<-chan *Post, <-chan struct{}, <-chan error) {
+func (s *TokenPostScraper) Scrape(limit uint) (<-chan *Post, <-chan struct{}, <-chan error) {
+	if limit == 0 {
+		return nil, nil, nil
+	}
+
 	c := s.Collector
+
+	count := atomic.Value{}
+	count.Store(uint(0))
 
 	errs := make(chan error)
 	posts := make(chan *Post)
@@ -57,10 +65,18 @@ func (s *TokenPostScraper) Scrape() (<-chan *Post, <-chan struct{}, <-chan error
 	})
 
 	c.OnHTML(`div[id=content] div.list_item_title`, func(e *colly.HTMLElement) {
+		cur := count.Load().(uint)
+
+		if cur >= limit {
+			return
+		}
+
 		postURL := e.Request.AbsoluteURL(e.ChildAttr("a", "href"))
 		if postURL == "" {
 			return
 		}
+
+		count.Store(cur + 1)
 
 		detailCollector.Visit(postURL)
 	})
