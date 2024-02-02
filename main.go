@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	limit := flag.Int("limit", 5, "limit of posts to scrape")
+	limit := flag.Int("limit", 1, "limit of posts to scrape")
 	flag.Parse()
 
 	if *limit < 1 {
