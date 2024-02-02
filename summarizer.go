@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/pandodao/tokenizer-go"
 	"github.com/tmc/langchaingo/llms/openai"
 )
 
@@ -50,23 +49,15 @@ func (s *Summarizer) Summarize(ctx context.Context, post *Post) error {
 		return nil
 	}
 
-	content := post.FormatSummarizable()
-
-	token, err := tokenizer.CalToken(content)
-	if err != nil {
-		return err
-	}
-
-	if token > 4500 {
+	content, ok := post.FormatSummarizable()
+	if !ok {
 		return ErrTooManyTokens
 	}
 
-	resp, err := s.llm.Call(ctx, prompt)
+	summary, err := s.llm.Call(ctx, fmt.Sprintf("%s\n\n%s", prompt, content))
 	if err != nil {
 		return err
 	}
-
-	summary := resp
 
 	err = s.cache.Set(ctx, post.ID, summary, time.Hour*24*3)
 	if err != nil {
