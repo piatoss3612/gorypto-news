@@ -15,7 +15,7 @@ const (
 )
 
 type Scraper interface {
-	Scrape() (<-chan *Post, <-chan struct{}, <-chan error)
+	Scrape(limit uint) (<-chan *Post, <-chan struct{}, <-chan error)
 	Close() error
 }
 

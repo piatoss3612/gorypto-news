@@ -3,9 +3,11 @@ module github.com/piatoss3612/gorypto-news
 go 1.21.6
 
 require (
+	github.com/go-co-op/gocron/v2 v2.2.2
 	github.com/gocolly/colly/v2 v2.1.0
 	github.com/pandodao/tokenizer-go v0.2.0
 	github.com/tmc/langchaingo v0.1.4
+	github.com/valyala/fasthttp v1.51.0
 	go.uber.org/zap v1.26.0
 )
 
@@ -24,15 +26,17 @@ require (
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/pprof v0.0.0-20230309165930-d61513b1440d // indirect
-	github.com/google/uuid v1.4.0 // indirect
+	github.com/google/uuid v1.6.0 // indirect
+	github.com/jonboulle/clockwork v0.4.0 // indirect
 	github.com/kennygrant/sanitize v1.2.4 // indirect
 	github.com/klauspost/compress v1.17.0 // indirect
 	github.com/pkoukk/tiktoken-go v0.1.2 // indirect
+	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d // indirect
 	github.com/temoto/robotstxt v1.1.2 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	github.com/valyala/fasthttp v1.51.0 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
+	golang.org/x/exp v0.0.0-20231219180239-dc181d75b848 // indirect
 	golang.org/x/net v0.19.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect

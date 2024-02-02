@@ -3,42 +3,56 @@ package main
 import (
 	"os"
 	"syscall"
+	"time"
 )
 
 func main() {
+	// init logger
 	l, _ := newLogger(false, "service", "gorypto news")
 	defer l.Sync()
 
-	// s := NewTokenPostScraper(true)
+	// init scraper
+	ts := NewTokenPostScraper(true)
 
-	// posts, done, errs := s.Scrape(1)
+	// TODO: init summarizer
 
-	// for {
-	// 	select {
-	// 	case post := <-posts:
-	// 		if post == nil {
-	// 			continue
-	// 		}
-	// 		fmt.Println(post.String())
-	// 	case <-done:
-	// 		fmt.Println("Done")
-	// 		return
-	// 	case err := <-errs:
-	// 		fmt.Println(err)
-	// 	}
-	// }
-
-	w := NewDiscordWebhook(nil, os.Getenv("WEBHOOK_URL"), true)
-
-	w.Run()
-
-	msg := &Message{
-		Content: "Hello, world!",
+	// init scheduler
+	s, err := NewScheduler(nil)
+	if err != nil {
+		l.Fatal("Failed to create scheduler", "error", err)
 	}
 
-	w.Send(msg)
+	// add scraper to scheduler
+	summarizedPosts := make(chan *Post)
 
+	err = s.AddScraper(ts, summarizedPosts, 1*time.Hour, 1, true)
+	if err != nil {
+		l.Fatal("Failed to add scraper to scheduler", "error", err)
+	}
+
+	// init webhook
+	w := NewDiscordWebhook(nil, os.Getenv("WEBHOOK_URL"), true)
+
+	// run webhook and scheduler
+	w.Run()
+	s.Start()
+
+	// process summarized posts to webhook message
+	// and send it via webhook
+	go func() {
+		for p := range summarizedPosts {
+			msg := &Message{
+				Content: p.Contents,
+			}
+
+			w.Send(msg)
+		}
+	}()
+
+	// graceful shutdown on SIGINT and SIGTERM
 	<-GracefulShutdown(func() {
+		close(summarizedPosts)
 		w.Stop()
+		s.StopJobs()
 	}, syscall.SIGINT, syscall.SIGTERM)
 }

@@ -69,18 +69,18 @@ type DiscordWebhook struct {
 	l       *Logger
 	logging bool
 
-	msgChan   chan *Message
-	closeChan chan struct{}
+	msgChan  chan *Message
+	doneChan chan struct{}
 }
 
 func NewDiscordWebhook(client *fasthttp.Client, URL string, logging bool) *DiscordWebhook {
 	w := &DiscordWebhook{
-		URL:       URL,
-		client:    client,
-		l:         GetLogger(),
-		logging:   logging,
-		msgChan:   make(chan *Message, 10),
-		closeChan: make(chan struct{}),
+		URL:      URL,
+		client:   client,
+		l:        GetLogger(),
+		logging:  logging,
+		msgChan:  make(chan *Message, 10),
+		doneChan: make(chan struct{}),
 	}
 
 	if client == nil {
@@ -95,7 +95,7 @@ func (w *DiscordWebhook) Run() {
 }
 
 func (w *DiscordWebhook) Stop() {
-	close(w.closeChan)
+	close(w.doneChan)
 }
 
 func (w *DiscordWebhook) Send(msg *Message) {
@@ -103,9 +103,9 @@ func (w *DiscordWebhook) Send(msg *Message) {
 }
 
 func (w *DiscordWebhook) handle() {
-	for {
-		defer close(w.msgChan)
+	defer close(w.msgChan)
 
+	for {
 		select {
 		case msg := <-w.msgChan:
 			if msg == nil {
@@ -146,7 +146,7 @@ func (w *DiscordWebhook) handle() {
 			}
 
 			fasthttp.ReleaseResponse(resp)
-		case <-w.closeChan:
+		case <-w.doneChan:
 			return
 		}
 	}
