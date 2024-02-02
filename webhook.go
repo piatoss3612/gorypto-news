@@ -63,8 +63,8 @@ type MessageEmbedField struct {
 }
 
 type DiscordWebhook struct {
-	URL    string
 	client *fasthttp.Client
+	URL    string
 
 	l       *Logger
 	logging bool
@@ -73,15 +73,21 @@ type DiscordWebhook struct {
 	closeChan chan struct{}
 }
 
-func NewDiscordWebhook(URL string, logging bool) *DiscordWebhook {
-	return &DiscordWebhook{
+func NewDiscordWebhook(client *fasthttp.Client, URL string, logging bool) *DiscordWebhook {
+	w := &DiscordWebhook{
 		URL:       URL,
-		client:    &fasthttp.Client{},
+		client:    client,
 		l:         GetLogger(),
 		logging:   logging,
 		msgChan:   make(chan *Message, 10),
 		closeChan: make(chan struct{}),
 	}
+
+	if client == nil {
+		w.client = &fasthttp.Client{}
+	}
+
+	return w
 }
 
 func (w *DiscordWebhook) Run() {
