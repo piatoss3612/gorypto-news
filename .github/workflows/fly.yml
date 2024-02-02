@@ -11,14 +11,13 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: superfly/flyctl-actions/setup-flyctl@master
-      - name: Deploy to Fly
-        run: flyctl deploy --remote-only
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
       - name: Set runtime secrets
         run: |
             flyctl secrets set WEBHOOK_URL=${{ secrets.WEBHOOK_URL }}
             flyctl secrets set OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
-            flyctl secrets deploy
             env:
               FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+      - name: Deploy to Fly
+        run: flyctl deploy --remote-only
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
