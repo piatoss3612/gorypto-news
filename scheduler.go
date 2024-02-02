@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"time"
 
 	"github.com/go-co-op/gocron/v2"
@@ -29,7 +30,7 @@ func NewScheduler(sum *Summarizer) (*Scheduler, error) {
 }
 
 func (s *Scheduler) AddScraper(scraper Scraper, res chan<- *Post, duration time.Duration, limit uint, logging bool) error {
-	_, err := s.NewJob(gocron.DurationJob(duration), gocron.NewTask(func() {
+	j, err := s.NewJob(gocron.DurationJob(duration), gocron.NewTask(func() {
 		post, done, errs := scraper.Scrape(limit)
 
 		for {
@@ -39,14 +40,18 @@ func (s *Scheduler) AddScraper(scraper Scraper, res chan<- *Post, duration time.
 					continue
 				}
 
-				// err := s.summarizer.Summarize(context.Background(), p)
-				// if err != nil {
-				// 	if logging {
-				// 		Error("Failed to summarize post", err)
-				// 	}
+				err := s.sum.Summarize(context.Background(), p)
+				if err != nil {
+					if logging {
+						s.l.Error("Failed to summarize post", "error", err)
+					}
 
-				// 	continue
-				// }
+					if err == ErrTooManyTokens {
+						res <- p
+					}
+
+					continue
+				}
 
 				res <- p
 			case <-done:
@@ -69,6 +74,10 @@ func (s *Scheduler) AddScraper(scraper Scraper, res chan<- *Post, duration time.
 	if err != nil {
 		return err
 	}
+
+	go func() {
+		j.RunNow()
+	}()
 
 	return nil
 }

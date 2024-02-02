@@ -4,4 +4,4 @@ export
 .PHONY: run
 run:
 	@echo "Running the application"
-	@go run .
+	@go run . --limit 1

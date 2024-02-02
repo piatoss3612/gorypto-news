@@ -43,14 +43,18 @@ func (s *Summarizer) Summarize(ctx context.Context, post *Post) error {
 			return err
 		}
 
-		post.Summary = summary
-		post.Summarized = true
+		if summary != "" {
+			post.Summary = summary
+			post.Summarized = true
+		}
 
 		return nil
 	}
 
 	content, ok := post.FormatSummarizable()
+
 	if !ok {
+		_ = s.cache.Set(ctx, post.ID, "", time.Hour*24*3)
 		return ErrTooManyTokens
 	}
 
@@ -63,6 +67,9 @@ func (s *Summarizer) Summarize(ctx context.Context, post *Post) error {
 	if err != nil {
 		return err
 	}
+
+	post.Summary = summary
+	post.Summarized = true
 
 	return nil
 }

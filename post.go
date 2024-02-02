@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/pandodao/tokenizer-go"
 )
@@ -68,4 +69,34 @@ func (p Post) FormatSummarizable() (string, bool) {
 	}
 
 	return s, true
+}
+
+func (p Post) ToMessage() *Message {
+	var embed MessageEmbed
+
+	if p.Summarized {
+		embed = MessageEmbed{
+			Title:       p.Title,
+			Description: p.Summary,
+			URL:         p.URL,
+			Image: &MessageEmbedImage{
+				URL: p.Image,
+			},
+			Timestamp: time.Now().Format(time.RFC3339),
+		}
+	} else {
+		embed = MessageEmbed{
+			Title:       p.Title,
+			Description: p.Contents, // TODO: it might be too long
+			URL:         p.URL,
+			Image: &MessageEmbedImage{
+				URL: p.Image,
+			},
+			Timestamp: time.Now().Format(time.RFC3339),
+		}
+	}
+
+	return &Message{
+		Embeds: []*MessageEmbed{&embed},
+	}
 }
