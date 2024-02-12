@@ -30,8 +30,8 @@ func NewTokenPostScraper(logging bool) *TokenPostScraper {
 	s := &TokenPostScraper{
 		Collector: colly.NewCollector(
 			colly.AllowedDomains("www.tokenpost.kr", "tokenpost.kr"),
-			// colly.CacheDir(TokenPostCacheDir), // arising error in docker container (permission denied)
-			colly.Async(),
+			colly.Async(true),
+			colly.AllowURLRevisit(),
 		),
 		logging: logging,
 	}
@@ -48,13 +48,17 @@ func (s *TokenPostScraper) Scrape(limit uint) (<-chan *Post, <-chan struct{}, <-
 		return nil, nil, nil
 	}
 
+	if s.logging {
+		s.l.Info("Starting scraping")
+	}
+
 	c := s.Collector
 
 	count := atomic.Value{}
 	count.Store(uint(0))
 
 	errs := make(chan error)
-	posts := make(chan *Post)
+	posts := make(chan *Post, limit)
 
 	detailCollector := c.Clone()
 
@@ -70,14 +74,11 @@ func (s *TokenPostScraper) Scrape(limit uint) (<-chan *Post, <-chan struct{}, <-
 		if cur >= limit {
 			return
 		}
-
 		postURL := e.Request.AbsoluteURL(e.ChildAttr("a", "href"))
 		if postURL == "" {
 			return
 		}
-
 		count.Store(cur + 1)
-
 		detailCollector.Visit(postURL)
 	})
 
@@ -95,7 +96,7 @@ func (s *TokenPostScraper) Scrape(limit uint) (<-chan *Post, <-chan struct{}, <-
 
 	detailCollector.OnHTML(`div[id=content] div[id=articleContentArea]`, func(e *colly.HTMLElement) {
 		categories := e.ChildTexts("div.view_blockchain_item > span")
-		title := strings.TrimSpace(e.ChildText("span.view_top_title"))
+		title := strings.TrimSpace(e.ChildText("h1.view_top_title"))
 		img := strings.TrimSpace(e.ChildAttr("div.imgBox > img", "src"))
 
 		builder := strings.Builder{}
@@ -121,7 +122,7 @@ func (s *TokenPostScraper) Scrape(limit uint) (<-chan *Post, <-chan struct{}, <-
 			builder.WriteString(fmt.Sprintf("%s\n\n", content))
 		})
 
-		posts <- &Post{
+		post := &Post{
 			Type:       PostTypeNews,
 			ID:         fmt.Sprintf("TokenPost%s", e.Request.URL.Path),
 			Title:      title,
@@ -130,6 +131,8 @@ func (s *TokenPostScraper) Scrape(limit uint) (<-chan *Post, <-chan struct{}, <-
 			Image:      img,
 			Contents:   builder.String(),
 		}
+
+		posts <- post
 	})
 
 	detailCollector.OnScraped(func(r *colly.Response) {
@@ -139,6 +142,8 @@ func (s *TokenPostScraper) Scrape(limit uint) (<-chan *Post, <-chan struct{}, <-
 	})
 
 	done := make(chan struct{})
+
+	fmt.Println(posts, done, errs)
 
 	go func() {
 		c.Visit("https://www.tokenpost.kr/blockchain")

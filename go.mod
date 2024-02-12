@@ -1,6 +1,6 @@
 module github.com/piatoss3612/gorypto-news
 
-go 1.21.6
+go 1.22.0
 
 require (
 	github.com/go-co-op/gocron/v2 v2.2.2

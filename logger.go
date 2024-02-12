@@ -16,33 +16,26 @@ type Logger struct {
 	s *zap.SugaredLogger
 }
 
-func NewLogger(development bool, withArgs ...interface{}) (*Logger, error) {
-	var err error
+func NewLogger(development bool, withArgs ...interface{}) *Logger {
 	var logger *Logger
 
 	loggerOnce.Do(func() {
-		logger, err = newLogger(development, withArgs...)
+		logger = newLogger(development, withArgs...)
 	})
 
-	return logger, err
+	return logger
 }
 
-func newLogger(development bool, withArgs ...interface{}) (*Logger, error) {
-	var err error
+func newLogger(development bool, withArgs ...interface{}) *Logger {
 	var z *zap.Logger
 
 	if development {
-		z, err = zap.NewDevelopment(zap.AddCallerSkip(1))
+		z = zap.Must(zap.NewDevelopment(zap.AddCallerSkip(1)))
 	} else {
-		z, err = zap.NewProduction(zap.AddCallerSkip(1))
-	}
-	if err != nil {
-		return nil, err
+		z = zap.Must(zap.NewProduction(zap.AddCallerSkip(1)))
 	}
 
-	s := z.Sugar()
-
-	s = s.With(withArgs...)
+	s := z.Sugar().With(withArgs...)
 
 	zap.ReplaceGlobals(z)
 
@@ -51,7 +44,7 @@ func newLogger(development bool, withArgs ...interface{}) (*Logger, error) {
 		s: s,
 	}
 
-	return logger, nil
+	return logger
 }
 
 func GetLogger() *Logger {

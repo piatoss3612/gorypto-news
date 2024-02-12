@@ -12,6 +12,7 @@ import (
 
 func main() {
 	limit := flag.Int("limit", 1, "limit of posts to scrape")
+	dev := flag.Bool("dev", true, "development mode")
 	flag.Parse()
 
 	if *limit < 1 {
@@ -19,8 +20,14 @@ func main() {
 	}
 
 	// init logger
-	l, _ := newLogger(false, "service", "gorypto news")
+	l := newLogger(*dev, "service", "gorypto news")
 	defer l.Sync()
+
+	defer func() {
+		if r := recover(); r != nil {
+			l.Error("Panic recovered", "error", r)
+		}
+	}()
 
 	// init scraper
 	ts := NewTokenPostScraper(true)
@@ -33,7 +40,7 @@ func main() {
 
 	cache := NewInMemoryCache()
 
-	sum := NewSummarizer(llm, cache)
+	sum := NewOpenAISummarizer(llm, cache)
 
 	// init scheduler
 	s, err := NewScheduler(sum)
