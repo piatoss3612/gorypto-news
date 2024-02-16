@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/valyala/fasthttp"
 )
@@ -111,6 +112,8 @@ func (w *DiscordWebhook) handle() {
 			if msg == nil {
 				continue
 			}
+
+			time.Sleep(1 * time.Second) //
 
 			b, err := json.Marshal(msg)
 			if err != nil {

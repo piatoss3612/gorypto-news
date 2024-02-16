@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
 	"sync/atomic"
 
 	"github.com/gocolly/colly/v2"
@@ -56,6 +57,7 @@ func (s *TokenPostScraper) Scrape(limit uint) (<-chan *Post, <-chan struct{}, <-
 
 	count := atomic.Value{}
 	count.Store(uint(0))
+	mu := sync.Mutex{}
 
 	errs := make(chan error)
 	posts := make(chan *Post, limit)
@@ -69,6 +71,9 @@ func (s *TokenPostScraper) Scrape(limit uint) (<-chan *Post, <-chan struct{}, <-
 	})
 
 	c.OnHTML(`div[id=content] div.list_item_title`, func(e *colly.HTMLElement) {
+		mu.Lock()
+		defer mu.Unlock()
+
 		cur := count.Load().(uint)
 
 		if cur >= limit {
